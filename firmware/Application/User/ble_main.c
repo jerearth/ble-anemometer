@@ -24,6 +24,7 @@
 
 
 #include "ble_anemometer.h"
+#include "freq_sensor.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -190,6 +191,7 @@ void ModulesInit(void)
   LL_AHB_EnableClock(LL_AHB_PERIPH_PKA|LL_AHB_PERIPH_RNG);
 
 
+
   BLECNTR_InitGlobal();
 
   HAL_VTIMER_InitType VTIMER_InitStruct = {HS_STARTUP_TIME, INITIAL_CALIBRATION, CALIBRATION_INTERVAL};
@@ -238,9 +240,9 @@ int main(void)
   PowerSaveLevels stopLevel;
 
 
+
   if (SystemInit(POWER_CONSUMPTION_DEMO_SYSTEM_CLOCK, POWER_CONSUMPTION_DEMO_BLE_CLOCK) != SUCCESS)
   {
-    /* Error during system clock configuration take appropriate action */
     while(1);
   }
 
@@ -258,6 +260,9 @@ int main(void)
   DeviceInit();
 
   APP_Init();
+
+
+
   printf("Zive IT - projekt BLE Broadcast Test\r\n");
   printf("Enter ? for list of commands\r\n");
 
@@ -298,6 +303,7 @@ int main(void)
         break;
       case '?':
         help();
+
         break;
       case 'r':
         NVIC_SystemReset();
@@ -336,11 +342,12 @@ int main(void)
 			memcpy(&adv_data[22], &anemodata, sizeof(BLE_Anemometer_data_t));
 
 
+			BSP_COM_Init(NULL);
 			//int ret = aci_gap_set_advertising_data(0, ADV_COMPLETE_DATA, sizeof(adv_data), adv_data);
 
 			APP_Tick();
-			//BSP_COM_Init(NULL);
-			// printf("Set advertising data %02X\n", ret);
+
+			// printf("ADC %f mV  %f mV\n", adc1, adc2);
 
 		  /* Disable the UART to save power */
 		  if(LL_USART_IsEnabled(BSP_UART))

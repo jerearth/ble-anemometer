@@ -14,9 +14,8 @@ typedef struct
 {
 	uint16_t batt;
 	uint16_t temp;
-	uint8_t angle_deg;
-	uint8_t speed_ms;
-	uint16_t reserved;
+	uint16_t angle_deg;
+	uint16_t speed_ms;
 
 }BLE_Anemometer_data_t;
 

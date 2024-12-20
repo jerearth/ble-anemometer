@@ -35,7 +35,7 @@
                         						
                         <toolChain id="fr.ac6.ide.wise.managedbuild.toolchain.exe.release.856382953" name="WiSE GCC Toolchain" superClass="fr.ac6.ide.wise.managedbuild.toolchain.exe.release">
                             							
-                            <option id="fr.ac6.ide.wise.managedbuild.option.optimization.level.553123971" name="Optimization level" superClass="fr.ac6.ide.wise.managedbuild.option.optimization.level" useByScannerDiscovery="true" value="fr.ac6.ide.wise.managedbuild.option.optimization.level.size" valueType="enumerated"/>
+                            <option id="fr.ac6.ide.wise.managedbuild.option.optimization.level.553123971" name="Optimization level" superClass="fr.ac6.ide.wise.managedbuild.option.optimization.level" useByScannerDiscovery="true" value="fr.ac6.ide.wise.managedbuild.option.optimization.level.debug" valueType="enumerated"/>
                             							
                             <option id="fr.ac6.ide.wise.managedbuild.option.debugging.level.512715943" name="Debugging level" superClass="fr.ac6.ide.wise.managedbuild.option.debugging.level" useByScannerDiscovery="true" value="fr.ac6.ide.wise.managedbuild.option.debugging.level.max" valueType="enumerated"/>
                             							
@@ -192,6 +192,12 @@
                         </toolChain>
                         					
                     </folderInfo>
+                    					
+                    <sourceEntries>
+                        						
+                        <entry excluding="Application/User/freq_sensor_.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+                        					
+                    </sourceEntries>
                     				
                 </configuration>
                 			

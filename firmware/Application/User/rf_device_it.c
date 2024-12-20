@@ -29,6 +29,8 @@
 #include "rf_driver_hal_vtimer.h"
 #include "hal_miscutil.h"
 #include "crash_handler.h"
+#include "rf_driver_ll_tim.h"
+#include "freq_sensor.h"
 
 
 /** @addtogroup BlueNRG1_StdPeriph_Examples
@@ -43,6 +45,10 @@
 * @{
 */
 
+#define DEBOUNCE_RESET_VAL 0xFFFFFFFF
+volatile uint32_t debounce_count = DEBOUNCE_RESET_VAL,debounce_last = 0;
+
+#define DEBOUNCE_CNT 0
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -89,6 +95,8 @@ void SVC_IRQHandler(void)
 */
 void SysTick_IRQHandler(void)
 {
+	if(debounce_count != DEBOUNCE_RESET_VAL)
+		debounce_count++;
 }
 
 
@@ -125,11 +133,7 @@ void DMA_IRQHandler(void)
 * @retval None
 */
 
-void GPIOA_IRQHandler(void)
-{
 
-
-}
 
 void BLE_WKUP_IRQHandler(void)
 {
@@ -183,6 +187,58 @@ void BLE_RXTX_SEQ_IRQHandler(void)
 * @}
 */
 
+/*
+void TIMx_IRQHandler(void)
+{
+   if(LL_TIM_IsActiveFlag_CC1(TIMx) == 1)
+  {
+    LL_TIM_ClearFlag_CC1(TIMx);
+
+   TimerCaptureCompare_Callback();
+  }
+}*/
+
+void HALLSpeed_RestCounter(void)
+{
+	debounce_count = DEBOUNCE_RESET_VAL;
+}
+void HALL_IRQHandler(void)
+{
+	printf("\r\nEXTI HANDLER..\r\n");
+
+	if(debounce_count == DEBOUNCE_RESET_VAL)
+	{
+		debounce_count = debounce_last = 0;
+		return;
+	}
+
+
+	  if (LL_EXTI_IsInterruptPending(HALL_SPEED_EXTI_LINE) != RESET)
+	  {
+		LL_EXTI_ClearInterrupt(HALL_SPEED_EXTI_LINE);
+
+		//if ( (debounce_count - debounce_last) >= DEBOUNCE_CNT )
+
+		{
+		  /* Add the SW no bounce */
+
+		  /* Handle user button press in dedicated function */
+		  HallSpeed_Callback(debounce_count - debounce_last);
+		  debounce_last = debounce_count;
+		}
+	  }
+}
+
+void GPIOA_IRQHandler(void)
+{
+	HALL_IRQHandler();
+}
+
+
+void GPIOB_IRQHandler(void)
+{
+	HALL_IRQHandler();
+}
 /**
 * @}
 */

@@ -23,7 +23,7 @@
 
 #include "calibration.h"
 #include "ble_anemometer.h"
-
+#include "freq_sensor.h"
 
 /* Private typedef -----------------------------------------------------------*/
 
@@ -51,7 +51,7 @@
 static uint16_t aDST_Buffer[BUFFER_SIZE];
 int8_t offset_vinp0 = 0;
 int8_t offset_vinm0 = 0;
-
+int8_t offset_vinp1 = 0;
 BLE_Anemometer_data_t anemodata = {};
 
 
@@ -69,6 +69,7 @@ void APP_Init(void)
 	float adcValue = 0.0;
 
 
+	freq_sensor_init();
 
 	  /* BSP Init */
 	 APP_GPIO_Init();
@@ -110,6 +111,7 @@ void APP_Tick(void)
 
 
 
+
 	LL_DMA_SetMemoryAddress(DMA1, LL_DMA_CHANNEL_1, (uint32_t)&aDST_Buffer);
 	LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_1, BUFFER_SIZE);
 	LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_1);
@@ -135,15 +137,17 @@ void APP_Tick(void)
 	   * */
 
 	  float adc1 = (float)LL_ADC_GetADCConvertedValueSingle(ADC, aDST_Buffer[0], LL_ADC_VIN_RANGE_3V6, USER_DATAWIDTH, offset_vinp0);
+
+	  //adc1 = (float)LL_ADC_GetADCConvertedValueSingle(ADC, aDST_Buffer[0], LL_ADC_VIN_RANGE_3V6, USER_DATAWIDTH, offset_vinp1);
 	  float adc2 = (float)LL_ADC_GetADCConvertedValueSingle(ADC, aDST_Buffer[1], LL_ADC_VIN_RANGE_3V6, USER_DATAWIDTH, offset_vinm0);
 	  float temp =  LL_ADC_GetADCConvertedValueTemp(ADC, aDST_Buffer[4], USER_DATAWIDTH)/100.0;
 	  float batt = LL_ADC_GetADCConvertedValueBatt(ADC, aDST_Buffer[3], USER_DATAWIDTH, 0);
 
-	  anemodata.angle_deg = anemometer_adc2angle(adc1, adc2);
-	  anemodata.speed_ms++;
+	  anemodata.angle_deg = (uint16_t)(adc2*100.0f);
+
 	  anemodata.batt = (uint16_t)batt;
 	  anemodata.temp = (uint16_t)temp;
-	  /*
+
 	  float
 
 	  adcValue = (float)LL_ADC_GetADCConvertedValueSingle(ADC, aDST_Buffer[0], LL_ADC_VIN_RANGE_3V6, USER_DATAWIDTH, offset_vinp0);
@@ -156,7 +160,7 @@ void APP_Tick(void)
 	  printf("Battery voltage %d.%03d mV\r\n", PRINT_INT(adcValue),PRINT_FLOAT(adcValue));
 	  anemodata.batt = adcValue = LL_ADC_GetADCConvertedValueTemp(ADC, aDST_Buffer[4], USER_DATAWIDTH)/100.0;
 	  printf("Temperature %d.%02d %cC\r\n\n", PRINT_INT(adcValue),PRINT_FLOAT(adcValue), 248);
-*/
+
 	  /* Clear the DMA flag Transfer Complete on channel 1 */
 	  LL_DMA_ClearFlag_TC1(DMA1);
 
@@ -186,8 +190,17 @@ void APP_Tick(void)
 	  /* Turn on the LED2 if transfer error occurs */
 	  BSP_LED_On(BSP_LED3);
 	}
+
+	freq_measure_task();
+
+
 }
 
+void HallSpeed_Callback(uint32_t ticks)
+{
+	printf("\r\nEXTI Delay %d\r\n",ticks);
+	anemodata.speed_ms = (uint16_t)ticks;
+}
 
 
 
@@ -249,10 +262,16 @@ static void APP_ADC_Init(void)
   /* Set the 1st entry of the input sequence as VINP0 */
   LL_ADC_SetChannelSeq0(ADC, LL_ADC_CH_VINP0_TO_SINGLE_POSITIVE_INPUT);
   LL_ADC_SetVoltageRangeSingleVinp0(ADC, LL_ADC_VIN_RANGE_3V6);
+
+  /* Set the 1st entry of the input sequence as VINP1 */
+  //LL_ADC_SetChannelSeq0(ADC, LL_ADC_CH_VINP1_TO_SINGLE_POSITIVE_INPUT);
+  //LL_ADC_SetVoltageRangeSingleVinp1(ADC, LL_ADC_VIN_RANGE_3V6);
+
   if(LL_ADC_GET_CALIB_GAIN_FOR_VINPX_3V6() != 0xFFF) {
     LL_ADC_SetCalibPoint1Gain(ADC, LL_ADC_GET_CALIB_GAIN_FOR_VINPX_3V6() );
   
     offset_vinp0 = LL_ADC_GET_CALIB_OFFSET_FOR_VINPX_3V6();
+    //offset_vinp1 = LL_ADC_GET_CALIB_OFFSET_FOR_VINPX_3V6();
 #ifdef CONFIG_DEVICE_BLUENRG_LP
     if(offset_vinp0 < -64 || offset_vinp0 > 63) {
       LL_ADC_SetCalibPoint1Offset(ADC, 0);
@@ -262,6 +281,8 @@ static void APP_ADC_Init(void)
     {
       LL_ADC_SetCalibPoint1Offset(ADC, offset_vinp0);
       offset_vinp0 = 0;
+		//LL_ADC_SetCalibPoint1Offset(ADC, offset_vinp1);
+		//offset_vinp1 = 0;
     }
   }
   else {

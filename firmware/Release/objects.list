@@ -1,6 +1,7 @@
 "Application/User/ble_anemometer.o"
 "Application/User/ble_main.o"
 "Application/User/calibration.o"
+"Application/User/freq_sensor.o"
 "Application/User/rf_device_it.o"
 "Drivers/BSP/bluenrg_lp_evb_button.o"
 "Drivers/BSP/bluenrg_lp_evb_com.o"
