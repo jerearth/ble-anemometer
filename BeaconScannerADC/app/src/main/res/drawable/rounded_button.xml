@@ -1,0 +1,4 @@
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#0386F9" /> <!-- Farba pozadia tlačidla -->
+    <corners android:radius="18dp" /> <!-- Zaoblenie rohov -->
+</shape>
