@@ -158,7 +158,7 @@ void APP_Tick(void)
 	  printf("ADC differential %d.%03d mV\r\n", PRINT_INT(adcValue),PRINT_FLOAT(adcValue));
 	  anemodata.batt = adcValue = (float)LL_ADC_GetADCConvertedValueBatt(ADC, aDST_Buffer[3], USER_DATAWIDTH, 0);
 	  printf("Battery voltage %d.%03d mV\r\n", PRINT_INT(adcValue),PRINT_FLOAT(adcValue));
-	  anemodata.batt = adcValue = LL_ADC_GetADCConvertedValueTemp(ADC, aDST_Buffer[4], USER_DATAWIDTH)/100.0;
+	  anemodata.temp = adcValue = LL_ADC_GetADCConvertedValueTemp(ADC, aDST_Buffer[4], USER_DATAWIDTH)/100.0;
 	  printf("Temperature %d.%02d %cC\r\n\n", PRINT_INT(adcValue),PRINT_FLOAT(adcValue), 248);
 
 	  /* Clear the DMA flag Transfer Complete on channel 1 */
