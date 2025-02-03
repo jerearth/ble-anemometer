@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#000000"
+    tools:context=".MainActivity">
+
+    <!-- Middle section with content -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="top"
+        android:paddingTop="16dp"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp">
+
+        <!-- Section Scan Byte Record" -->
+        <LinearLayout
+            android:visibility="gone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/rounded_button"
+            android:backgroundTint="#368A8D93"
+            android:padding="8sp"
+            android:paddingStart="22sp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Bajtový záznam zo skenovania"
+                android:textSize="14sp"
+                android:textColor="#A0A0A0"
+                android:layout_marginBottom="2dp"
+                android:gravity="start" />
+
+            <TextView
+                android:id="@+id/tvRecordBytes"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="[B@4a57c3f8"
+                android:textSize="18sp"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                android:gravity="start" />
+        </LinearLayout>
+
+        <!-- Section Device Name -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/rounded_button"
+            android:backgroundTint="#368A8D93"
+            android:padding="8sp"
+            android:paddingStart="22sp">
+
+            <TextView
+                android:id="@+id/tvMacAddress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Názov zariadenia"
+                android:textSize="14sp"
+                android:textColor="#A0A0A0"
+                android:layout_marginBottom="2dp"
+                android:gravity="start" />
+
+            <TextView
+                android:id="@+id/tvDeviceName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Pripojte zariadenie"
+                android:textSize="18sp"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                android:gravity="start" />
+        </LinearLayout>
+
+        <!-- Main horizontal container -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <!-- Section Battery -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/rounded_button"
+                android:backgroundTint="#368A8D93"
+                android:padding="8sp"
+                android:paddingStart="22sp"
+                android:paddingEnd="22sp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Batéria"
+                    android:textSize="14sp"
+                    android:textColor="#A0A0A0"
+                    android:layout_marginBottom="2dp"
+                    android:gravity="start" />
+
+                <TextView
+                    android:id="@+id/tvBatt"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    android:textSize="18sp"
+                    android:textColor="#FFFFFF"
+                    android:textStyle="bold"
+                    android:gravity="start" />
+            </LinearLayout>
+
+            <!-- Section Temperature -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/rounded_button"
+                android:backgroundTint="#368A8D93"
+                android:padding="8sp"
+                android:paddingStart="22sp"
+                android:paddingEnd="22sp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Teplota"
+                    android:textSize="14sp"
+                    android:textColor="#A0A0A0"
+                    android:layout_marginBottom="2dp"
+                    android:gravity="start" />
+
+                <TextView
+                    android:id="@+id/tvTemp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    android:textSize="18sp"
+                    android:textColor="#FFFFFF"
+                    android:textStyle="bold"
+                    android:gravity="start" />
+            </LinearLayout>
+        </LinearLayout>
+
+
+        <!-- Section of icons with descriptions -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingTop="30dp"
+            android:paddingBottom="30dp"
+            android:background="@drawable/rounded_button"
+            android:backgroundTint="#368A8D93">
+
+            <!-- Section Wind Speed -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="62dp"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:layout_width="86dp"
+                    android:layout_height="86dp"
+                    android:src="@drawable/wind"
+                    android:layout_marginTop="5dp"
+                    app:tint="#FFFFFF" />
+
+                <!-- Horizontal layout for splitting the text m/s -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="15dp"
+                    android:gravity="bottom">
+
+                    <TextView
+                        android:id="@+id/tvSpeed"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="#FFFFFF"
+                        android:textSize="30sp"
+                        android:textStyle="bold"
+                        android:gravity="end" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="m/s"
+                        android:textColor="#FFFFFF"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:gravity="bottom"
+                        android:layout_marginStart="2dp" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Rýchlosť vetra"
+                    android:textColor="#FFF"
+                    android:textSize="16sp" />
+            </LinearLayout>
+
+
+            <!-- Wind Direction -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <!-- ImageView with a static background -->
+                <FrameLayout
+                    android:layout_width="86dp"
+                    android:layout_height="86dp"
+                    android:layout_marginTop="5dp"
+                    android:background="@drawable/direction_bg"
+                    android:backgroundTint="#FFFFFF">
+
+                    <ImageView
+                        android:id="@+id/ivDirection"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:src="@drawable/direction"
+                        android:rotation="0"
+                        app:tint="#FFFFFF"
+                        android:layout_gravity="center" />
+                </FrameLayout>
+
+                <TextView
+                    android:id="@+id/tvDirection"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="15dp"
+                    android:text="°"
+                    android:textColor="#FFFFFF"
+                    android:textSize="30sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Smer vetra"
+                    android:textColor="#FFF"
+                    android:textSize="16sp" />
+            </LinearLayout>
+
+        </LinearLayout>
+        <!-- JER Logo -->
+        <ImageView
+            android:id="@+id/jer_logo"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:src="@drawable/jer_logo"
+            app:tint="#36d0d1d4"
+            android:scaleType="centerInside"
+            android:padding="60dp"
+            android:contentDescription="JER Logo" />
+
+    </LinearLayout>
+
+
+
+    <!-- Button -->
+    <LinearLayout
+        android:id="@+id/search_button_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:orientation="horizontal"
+        android:background="@drawable/rounded_button"
+        android:gravity="center"
+        android:padding="12dp"
+        android:foreground="?attr/selectableItemBackground">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Pripojiť zariadenie"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:layout_marginEnd="8dp"
+            android:textAllCaps="true" />
+
+        <ImageView
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:src="@drawable/radar"
+            app:tint="#FFFFFF" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/textView10"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Živé IT projekty | Tímový projekt 2024/25"
+        android:textAlignment="center"
+        android:textColor="#A0A0A0"
+        android:textSize="12sp"
+        android:layout_marginBottom="3dp" />
+</LinearLayout>
