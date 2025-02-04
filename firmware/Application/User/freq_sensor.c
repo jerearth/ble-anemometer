@@ -195,6 +195,7 @@ Launch serial communication SW on PC (as HyperTerminal or TeraTerm) with proper 
 #include "rf_driver_ll_gpio.h"
 #include "bluenrg_lp_evb_com.h"
 /* Includes ------------------------------------------------------------------*/
+#include "ble_anemometer.h"
 #include "freq_sensor.h"
 
 
@@ -205,6 +206,9 @@ Launch serial communication SW on PC (as HyperTerminal or TeraTerm) with proper 
 
 /* Measured frequency */
 __IO uint32_t uwMeasuredFrequency = 0;
+__IO uint32_t uwMeasuredFrequencyIndex = 0;
+__IO uint32_t uwMeasuredFrequencySum = 0;
+__IO uint32_t uwMeasuredFlags = 0;
 
 /* Private function prototypes -----------------------------------------------*/
 
@@ -216,6 +220,52 @@ LL_EXTI_InitTypeDef EXTI_InitStruct = {0};
 
 /* Private user code ---------------------------------------------------------*/
 
+
+
+static void MX_TIMx_Init(void)
+{
+  LL_TIM_InitTypeDef TIM_InitStruct = {0};
+  LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+  /* Peripheral clock enable */
+  LL_EnableClock_TIMx();
+  LL_EnableClock_TIMx_CH1();
+
+  GPIO_InitStruct.Pin = TIMx_CH1_PIN;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
+  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  GPIO_InitStruct.Alternate = TIMx_CH1_AF;
+  LL_GPIO_Init(TIMx_CH1_PORT, &GPIO_InitStruct);
+
+  /* TIMx interrupt Init */
+  NVIC_SetPriority(TIMx_IRQn, IRQ_LOW_PRIORITY );
+ // NVIC_EnableIRQ(TIMx_IRQn);
+
+  /* Configure the TIMx time base unit */
+  TIM_InitStruct.Prescaler = 1200;
+  TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
+  TIM_InitStruct.Autoreload = 0xFFFF;
+  TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV4;
+  TIM_InitStruct.RepetitionCounter = 0;
+  LL_TIM_Init(TIMx, &TIM_InitStruct);
+
+  LL_TIM_DisableARRPreload(TIMx);
+
+  /* Configure the channel 1 */
+  LL_TIM_IC_SetActiveInput(TIMx, LL_TIM_CHANNEL_CH1, LL_TIM_ACTIVEINPUT_DIRECTTI);
+  LL_TIM_IC_SetPrescaler(TIMx, LL_TIM_CHANNEL_CH1, LL_TIM_ICPSC_DIV1);
+  LL_TIM_IC_SetFilter(TIMx, LL_TIM_CHANNEL_CH1, LL_TIM_IC_FILTER_FDIV1);
+  LL_TIM_IC_SetPolarity(TIMx, LL_TIM_CHANNEL_CH1, LL_TIM_IC_POLARITY_BOTHEDGE);
+
+
+
+
+
+}
+
+
 /**
 * @brief  The application entry point.
 * @retval int
@@ -223,9 +273,26 @@ LL_EXTI_InitTypeDef EXTI_InitStruct = {0};
 void freq_sensor_init(void)
 {
 
+	LL_Init1msTick(SystemCoreClock);
 
+	MX_TIMx_Init();
+
+	/*LL_TIM_EnableIT_CC1(TIMx);
+  //LL_TIM_GenerateEvent_CC1(TIMx);
+    LL_TIM_EnableIT_UPDATE(TIMx);
+    LL_TIM_ClearFlag_UPDATE(TIMx);*/
+
+  /***********************/
+  /* Start input capture */
+  /***********************/
+  /* Enable output channel 1 */
+  //LL_TIM_CC_EnableChannel(TIMx, LL_TIM_CHANNEL_CH1);
+ // LL_TIM_EnableCounter(TIMx);
+
+
+	return;
   /* Set systick to 1ms using system clock frequency */
-  LL_Init1msTick(SystemCoreClock);
+
 	//LL_InitTick(SystemCoreClock, 100);
   /* Initialize all configured peripherals */
   /* GPIO Ports Clock Enable */
@@ -277,10 +344,121 @@ void freq_sensor_init(void)
 
 }
 
+
+
+/**
+  * @brief This function handles TIMx capture compare interrupt.
+  */
+void TIMx_IRQHandler(void)
+{
+  /* Check whether interrupt is pending */
+  if(LL_TIM_IsActiveFlag_CC1(TIMx) == 1)
+  {
+    /* Clear the update interrupt flag*/
+
+	  uint32_t value =  LL_TIM_IC_GetCaptureCH1(TIMx);
+	  if(uwMeasuredFlags == 1)
+	  {
+		  uwMeasuredFrequencyIndex++;
+		  uwMeasuredFrequencySum  += value;
+		  if(uwMeasuredFrequencyIndex == 2)
+		  {
+			  uwMeasuredFrequencySum >>= 1;
+			  uwMeasuredFlags = 2;
+		  }
+	  }
+	  if(uwMeasuredFlags == 0)
+		  uwMeasuredFlags = 1;
+
+	  if(uwMeasuredFlags == 1)
+	  {
+		  LL_TIM_SetCounter(TIMx, 0);
+		  LL_TIM_ClearFlag_CC1(TIMx);
+	  }
+
+
+
+  }
+  return;
+
+  if(LL_TIM_IsActiveFlag_UPDATE(TIMx) == 1)
+   {
+
+	  uwMeasuredFrequencySum = uwMeasuredFrequency = 0;
+	  uwMeasuredFlags = 3;
+	  uint32_t aa= LL_TIM_GetCounter(TIMx);
+     LL_TIM_ClearFlag_UPDATE(TIMx);
+
+
+
+    // TimerCaptureCompare_Callback();
+   }
+}
+
+uint16_t convert_SPEED(float xT)
+{
+
+	float k = 2800.0;
+	float y0 = 35.0, y1 = 10.0 , x0 = 1.0, x1 = k;
+
+	 if (xT>3000)
+	 {
+		 y0 = 10.0, y1 = 0 , x0 = k, x1 = 15000;
+	 }
+
+	 if (xT) {
+		 	 printf("%d\r\n", (int)xT);
+		 	xT = xT > 15000 ? 15000 : xT;
+			  return (uint16_t) ((y0 + (y1 - y0) * ((xT - x0) / (x1 - x0)))*100.0);
+		  }
+	return (uint16_t)xT;
+}
+
 void freq_measure_task(void)
 {
-	HALLSpeed_RestCounter();
-	LL_mDelay(200);
+
+	//return;
+	printf("uwMeasuring...");
+	uwMeasuredFrequencyIndex = 0;
+	uwMeasuredFlags = 0;
+	uwMeasuredFrequencySum = 0;
+	// LL_EnableClock_TIMx();
+	 //LL_EnableClock_TIMx_CH1();
+
+	//NVIC_SetPriority(TIMx_IRQn, IRQ_LOW_PRIORITY );
+	NVIC_EnableIRQ(TIMx_IRQn);
+
+	LL_TIM_EnableIT_CC1(TIMx);
+	//LL_TIM_EnableIT_UPDATE(TIMx);
+
+	LL_TIM_CC_EnableChannel(TIMx, LL_TIM_CHANNEL_CH1);
+	LL_TIM_SetCounter(TIMx, 0);
+	//LL_TIM_ClearFlag_CC1(TIMx);
+	//LL_TIM_ClearFlag_UPDATE(TIMx);
+	/* Enable counter */
+	  LL_TIM_EnableCounter(TIMx);
+
+	  uint32_t max = 12;
+	  while(uwMeasuredFlags < 2 && max--) LL_mDelay(100);
+
+
+
+
+	  LL_TIM_DisableCounter(TIMx);
+
+	  LL_TIM_DisableIT_CC1(TIMx);
+	  //LL_TIM_DisableIT_UPDATE(TIMx);
+
+	  NVIC_DisableIRQ(TIMx_IRQn);
+	  anemodata.speed_ms = convert_SPEED(uwMeasuredFrequencySum);
+
+	  //printf("uwMeasuredFrequency = %d index:%d, flags:%d\n\r", uwMeasuredFrequencySum, uwMeasuredFrequencyIndex,uwMeasuredFlags);
+
+	  LL_mDelay(10);
+	  //  LL_APB0_DisableClock(LL_APB0_PERIPH_TIM17);
+	 // LL_AHB_DisableClock(LL_AHB_PERIPH_GPIOA);
+
+
 }
 
 
