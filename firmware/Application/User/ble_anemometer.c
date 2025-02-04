@@ -25,6 +25,8 @@
 #include "ble_anemometer.h"
 #include "freq_sensor.h"
 
+#include <math.h>
+
 /* Private typedef -----------------------------------------------------------*/
 
 /* Private define ------------------------------------------------------------*/
@@ -106,6 +108,30 @@ void APP_Reload(void)
 
 }
 
+int8_t calib[] = {
+35,	58,//0 1
+33,	45,//2 3
+35,	34,//4 5
+42,	34,//6 7
+54,	29,//8 9
+67,	31,//10 11
+68,	41,//12
+72,	56,//14
+66,	71,//16
+57,	71,//18
+47,	72,//20
+38,	69//22
+};
+
+int absHelp(int a)
+{
+	if(a<0)a = -a;
+	return a;
+}
+
+
+
+
 void APP_Tick(void)
 {
 
@@ -136,19 +162,72 @@ void APP_Tick(void)
 	   * Nacitanie hodnot adc , urcit z ADC pin 1, pin 2 uhol na zaklade kalibracnej tabulky
 	   * */
 
-	  float adc1 = (float)LL_ADC_GetADCConvertedValueSingle(ADC, aDST_Buffer[0], LL_ADC_VIN_RANGE_3V6, USER_DATAWIDTH, offset_vinp0);
 
-	  //adc1 = (float)LL_ADC_GetADCConvertedValueSingle(ADC, aDST_Buffer[0], LL_ADC_VIN_RANGE_3V6, USER_DATAWIDTH, offset_vinp1);
+	  float batt = LL_ADC_GetADCConvertedValueBatt(ADC, aDST_Buffer[2], USER_DATAWIDTH, 0);
+	 	  //float batt = LL_ADC_GetADCConvertedValueBatt(ADC, aDST_Buffer[3], USER_DATAWIDTH, 0);
+	 	  float temp =
+		  LL_ADC_GetADCConvertedValueTemp(ADC, aDST_Buffer[3], USER_DATAWIDTH)/100.0;
+
+	 	  anemodata.batt = (uint16_t)batt;
+		  anemodata.temp = (uint16_t)(temp * 100.0f);
+
+#ifdef SIMULATE
+
+	  int random_deg = rand() % 360;
+	  int mult_deg = random_deg / 30;
+	  anemodata.angle_deg = mult_deg * 30;
+
+	  int speed = rand() % 350;
+	  anemodata.speed_ms = speed*10 ;
+
+
+#else
+	  float adc1
+	   //= (float)LL_ADC_GetADCConvertedValueSingle(ADC, aDST_Buffer[0], LL_ADC_VIN_RANGE_3V6, USER_DATAWIDTH, offset_vinp0);
+	   = (float)LL_ADC_GetADCConvertedValueSingle(ADC, aDST_Buffer[0], LL_ADC_VIN_RANGE_3V6, USER_DATAWIDTH, offset_vinp1);
 	  float adc2 = (float)LL_ADC_GetADCConvertedValueSingle(ADC, aDST_Buffer[1], LL_ADC_VIN_RANGE_3V6, USER_DATAWIDTH, offset_vinm0);
-	  float temp =  LL_ADC_GetADCConvertedValueTemp(ADC, aDST_Buffer[4], USER_DATAWIDTH)/100.0;
-	  float batt = LL_ADC_GetADCConvertedValueBatt(ADC, aDST_Buffer[3], USER_DATAWIDTH, 0);
 
-	  anemodata.angle_deg = (uint16_t)(adc2*100.0f);
 
-	  anemodata.batt = (uint16_t)batt;
-	  anemodata.temp = (uint16_t)temp;
+	  float adc1p = 100.0f*adc1/batt;
+	  float adc2p = 100.0f*adc2/batt;
 
-	  float
+	  int adc1i = PRINT_INT(adc1p);
+	  int adc2i = PRINT_INT(adc2p);
+
+	  int min = INT32_MAX;
+	  int findI = -1;
+	  for(uint16_t i=0;i<11;i++)
+	  {
+		  int8_t a1min = calib[(2*i)];
+		  int8_t a1max = calib[(2*i)+2];
+
+		  int8_t a2min = calib[(2*i)+1];
+		  int8_t a2max = calib[(2*i)+3];
+
+		  int c = absHelp((adc1i-a1min) + (adc1i-a1max)) +
+				  absHelp((adc2i-a2min) + (adc2i-a2max));
+
+
+
+		  //printf("%3d: %3d\t%3d\r\n",i, (adc1i-a1min) + (adc1i-a1max) , (adc2i-a2min) + (adc2i-a2max));
+
+		  if(min > c)
+		  {
+			  min = c;
+			  findI = i;
+		  }
+	  }
+	  findI*=30;
+
+	  anemodata.angle_deg = findI;
+
+#endif
+	   //printf("ADC PB2 %5d mV\r\n", PRINT_INT(adc2));
+	  //printf("ADC PB2 %5d mV\r\n", PRINT_INT(adc2));
+
+
+
+	 /* float
 
 	  adcValue = (float)LL_ADC_GetADCConvertedValueSingle(ADC, aDST_Buffer[0], LL_ADC_VIN_RANGE_3V6, USER_DATAWIDTH, offset_vinp0);
 	  printf("ADC pin 1 %d.%03d mV\r\n", PRINT_INT(adcValue),PRINT_FLOAT(adcValue));
@@ -158,15 +237,16 @@ void APP_Tick(void)
 	  printf("ADC differential %d.%03d mV\r\n", PRINT_INT(adcValue),PRINT_FLOAT(adcValue));
 	  anemodata.batt = adcValue = (float)LL_ADC_GetADCConvertedValueBatt(ADC, aDST_Buffer[3], USER_DATAWIDTH, 0);
 	  printf("Battery voltage %d.%03d mV\r\n", PRINT_INT(adcValue),PRINT_FLOAT(adcValue));
-	  anemodata.temp = adcValue = LL_ADC_GetADCConvertedValueTemp(ADC, aDST_Buffer[4], USER_DATAWIDTH)/100.0;
+	  anemodata.batt = adcValue = LL_ADC_GetADCConvertedValueTemp(ADC, aDST_Buffer[4], USER_DATAWIDTH)/100.0;
 	  printf("Temperature %d.%02d %cC\r\n\n", PRINT_INT(adcValue),PRINT_FLOAT(adcValue), 248);
-
+*/
 	  /* Clear the DMA flag Transfer Complete on channel 1 */
 	  LL_DMA_ClearFlag_TC1(DMA1);
 
 	  /* Toggle the conversion/activity LED */
 	  //BSP_LED_Toggle(BSP_LED2);
 
+	  printf("%d\t%d\t%d\t%d.%d\r\n",anemodata.angle_deg, anemodata.speed_ms,anemodata.batt,(int)(temp),PRINT_FLOAT(temp));
 
 
 	}
@@ -190,11 +270,13 @@ void APP_Tick(void)
 	  /* Turn on the LED2 if transfer error occurs */
 	  BSP_LED_On(BSP_LED3);
 	}
-
+#ifndef SIMULATE
 	freq_measure_task();
-
+#endif
 
 }
+
+
 
 void HallSpeed_Callback(uint32_t ticks)
 {
@@ -211,7 +293,8 @@ static void APP_GPIO_Init(void)
   LL_GPIO_StructInit(&gpioinitstruct);
   /* Initialization of the ADC pins */
   LL_AHB_EnableClock(LL_AHB_PERIPH_GPIOB);
-  gpioinitstruct.Pin = LL_GPIO_PIN_2 | LL_GPIO_PIN_3;
+  //gpioinitstruct.Pin = LL_GPIO_PIN_2 | LL_GPIO_PIN_3;
+  gpioinitstruct.Pin = LL_GPIO_PIN_2 | LL_GPIO_PIN_1;
   gpioinitstruct.Mode = LL_GPIO_MODE_ANALOG;
   gpioinitstruct.Speed = LL_GPIO_SPEED_FREQ_HIGH;
   gpioinitstruct.OutputType = LL_GPIO_OUTPUT_OPENDRAIN;  
@@ -260,18 +343,18 @@ static void APP_ADC_Init(void)
   LL_ADC_SetSequenceLength(ADC, LL_ADC_SEQ_LEN_05);
   
   /* Set the 1st entry of the input sequence as VINP0 */
-  LL_ADC_SetChannelSeq0(ADC, LL_ADC_CH_VINP0_TO_SINGLE_POSITIVE_INPUT);
-  LL_ADC_SetVoltageRangeSingleVinp0(ADC, LL_ADC_VIN_RANGE_3V6);
+  //LL_ADC_SetChannelSeq0(ADC, LL_ADC_CH_VINP0_TO_SINGLE_POSITIVE_INPUT);
+  //LL_ADC_SetVoltageRangeSingleVinp0(ADC, LL_ADC_VIN_RANGE_3V6);
 
   /* Set the 1st entry of the input sequence as VINP1 */
-  //LL_ADC_SetChannelSeq0(ADC, LL_ADC_CH_VINP1_TO_SINGLE_POSITIVE_INPUT);
-  //LL_ADC_SetVoltageRangeSingleVinp1(ADC, LL_ADC_VIN_RANGE_3V6);
+  LL_ADC_SetChannelSeq0(ADC, LL_ADC_CH_VINP1_TO_SINGLE_POSITIVE_INPUT);
+  LL_ADC_SetVoltageRangeSingleVinp1(ADC, LL_ADC_VIN_RANGE_3V6);
 
   if(LL_ADC_GET_CALIB_GAIN_FOR_VINPX_3V6() != 0xFFF) {
     LL_ADC_SetCalibPoint1Gain(ADC, LL_ADC_GET_CALIB_GAIN_FOR_VINPX_3V6() );
   
-    offset_vinp0 = LL_ADC_GET_CALIB_OFFSET_FOR_VINPX_3V6();
-    //offset_vinp1 = LL_ADC_GET_CALIB_OFFSET_FOR_VINPX_3V6();
+    //offset_vinp0 = LL_ADC_GET_CALIB_OFFSET_FOR_VINPX_3V6();
+    offset_vinp1 = LL_ADC_GET_CALIB_OFFSET_FOR_VINPX_3V6();
 #ifdef CONFIG_DEVICE_BLUENRG_LP
     if(offset_vinp0 < -64 || offset_vinp0 > 63) {
       LL_ADC_SetCalibPoint1Offset(ADC, 0);
@@ -279,10 +362,10 @@ static void APP_ADC_Init(void)
     else
 #endif
     {
-      LL_ADC_SetCalibPoint1Offset(ADC, offset_vinp0);
-      offset_vinp0 = 0;
-		//LL_ADC_SetCalibPoint1Offset(ADC, offset_vinp1);
-		//offset_vinp1 = 0;
+     // LL_ADC_SetCalibPoint1Offset(ADC, offset_vinp0);
+     // offset_vinp0 = 0;
+		LL_ADC_SetCalibPoint1Offset(ADC, offset_vinp1);
+		offset_vinp1 = 0;
     }
   }
   else {
@@ -313,9 +396,16 @@ static void APP_ADC_Init(void)
   }
   LL_ADC_SetCalibPointForSingleNeg3V6(ADC, LL_ADC_CALIB_POINT_2);
   
+  LL_ADC_SetChannelSeq2(ADC, LL_ADC_CH_BATTERY_LEVEL_DETECTOR);
+  LL_ADC_SetChannelSeq3(ADC, LL_ADC_CH_TEMPERATURE_SENSOR);
+
   /* Set the 3rd entry of the input sequence as differential (VINP0-VINM0) */
+ /*
+
   LL_ADC_SetChannelSeq2(ADC, LL_ADC_CH_VINP0_VINM0_TO_DIFF_INPUT);
   LL_ADC_SetVoltageRangeDiffVinp0Vinm0(ADC, LL_ADC_VIN_RANGE_3V6);
+
+
   if(LL_ADC_GET_CALIB_GAIN_FOR_VINDIFF_3V6() != 0xFFF) {
     LL_ADC_SetCalibPoint3Gain(ADC, LL_ADC_GET_CALIB_GAIN_FOR_VINDIFF_3V6() );
     LL_ADC_SetCalibPoint3Offset(ADC, LL_ADC_GET_CALIB_OFFSET_FOR_VINDIFF_3V6() );
@@ -325,11 +415,10 @@ static void APP_ADC_Init(void)
   }
   LL_ADC_SetCalibPointForDiff3V6(ADC, LL_ADC_CALIB_POINT_3);
   
-  /* Set the 4th entry of the input sequence as battery level detector */
   LL_ADC_SetChannelSeq3(ADC, LL_ADC_CH_BATTERY_LEVEL_DETECTOR);
-  
-  /* Set the 5th entry of the input sequence as temperature sensor */
   LL_ADC_SetChannelSeq4(ADC, LL_ADC_CH_TEMPERATURE_SENSOR);
+  */
+  
   
 #ifdef CONFIG_DEVICE_BLUENRG_LP
   /* Enable the temperature sensor */
