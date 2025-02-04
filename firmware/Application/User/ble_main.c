@@ -26,6 +26,8 @@
 #include "ble_anemometer.h"
 #include "freq_sensor.h"
 
+
+
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 
@@ -45,13 +47,24 @@ NO_INIT(uint32_t dyn_alloc_a[DYNAMIC_MEMORY_SIZE>>2]);
 static uint8_t device_state;
 static uint16_t connection_interval;
 
+#ifdef SIMULATE
+
 static uint8_t adv_data[] = {0x02,AD_TYPE_FLAGS, FLAG_BIT_LE_GENERAL_DISCOVERABLE_MODE|FLAG_BIT_BR_EDR_NOT_SUPPORTED,
-                               16, AD_TYPE_COMPLETE_LOCAL_NAME, 'A', 'n', 'e', 'm', 'o', ' ', 'm', 'e', 't', 'e', 'r',  'T', 'e', 's', 't',
+                               16, AD_TYPE_COMPLETE_LOCAL_NAME, 'A', 'n', 'e', 'm', 'o', ' ', 'm', 'e', 't', 'e', 'r',  ' ', 'S', 'I', 'M',
 
 							   1+sizeof(BLE_Anemometer_data_t), AD_TYPE_MANUFACTURER_SPECIFIC_DATA,
 							   // 22
 							   0,0,0,0,0,0,0,0
 };
+#else
+static uint8_t adv_data[] = {0x02,AD_TYPE_FLAGS, FLAG_BIT_LE_GENERAL_DISCOVERABLE_MODE|FLAG_BIT_BR_EDR_NOT_SUPPORTED,
+                               16, AD_TYPE_COMPLETE_LOCAL_NAME, 'A', 'n', 'e', 'm', 'o', ' ', 'm', 'e', 't', 'e', 'r',  ' ', ' ', ' ', ' ',
+
+							   1+sizeof(BLE_Anemometer_data_t), AD_TYPE_MANUFACTURER_SPECIFIC_DATA,
+							   // 22
+							   0,0,0,0,0,0,0,0
+};
+#endif
 
 static Advertising_Set_Parameters_t Advertising_Set_Parameters[1];
 
@@ -83,7 +96,15 @@ void help(void)
  *******************************************************************************/
 void DeviceInit(void)
 {
+
+#ifndef SIMULATE
+
   uint8_t bdaddr[] = {0xBC, 0xEC, 0x00, 0xE1, 0x80, 0x02};
+
+#else
+  uint8_t bdaddr[] = {0xBD, 0xEC, 0x00, 0xE1, 0x80, 0x02};
+
+#endif
   uint8_t ret;
   uint16_t service_handle, dev_name_char_handle, appearance_char_handle;
   uint8_t device_name[] = {'Z', 'i', 'v', 'e',' ', 'I','T','-','2','5'};
@@ -95,7 +116,7 @@ void DeviceInit(void)
   }
 
   /* Set the TX power 0 dBm */
-  aci_hal_set_tx_power_level(0, 24);
+  aci_hal_set_tx_power_level(0, 26);
 
   /* GATT Init */
   ret = aci_gatt_srv_init();
@@ -264,7 +285,7 @@ int main(void)
 
 
   printf("Zive IT - projekt BLE Broadcast Test\r\n");
-  printf("Enter ? for list of commands\r\n");
+ // printf("Enter ? for list of commands\r\n");
 
   /* No Wakeup Source needed */
   wakeupIO.IO_Mask_High_polarity = 0;
@@ -273,17 +294,23 @@ int main(void)
   wakeupIO.LPU_enable = 0;
 
   device_state = DEVICE_IDLE_STATE;
+
+  Configure_DeviceAdvertising(ADV_INTERVAL_FAST_MS);
+   Set_DeviceConnectable();
+   device_state = DEVICE_ADV_STATE;
+
+
   while(1) {
 
 	 // BSP_LED_Toggle(BSP_LED2);
     ModulesTick();
 
-
+/*
     if (BSP_COM_Read(&charRead)) {
       switch (charRead) {
       case 'f':
         if (device_state == DEVICE_IDLE_STATE) {
-          /* Device in discoverable mode with fast adv interval 100 ms */
+
           Configure_DeviceAdvertising(ADV_INTERVAL_FAST_MS);
           Set_DeviceConnectable();
           device_state = DEVICE_ADV_STATE;
@@ -293,7 +320,7 @@ int main(void)
         break;
       case 's':
         if (device_state == DEVICE_IDLE_STATE) {
-          /* Device in discoverable mode with slow adv interval 1000 ms */
+
           Configure_DeviceAdvertising(ADV_INTERVAL_SLOW_MS);
           Set_DeviceConnectable();
           device_state = DEVICE_ADV_STATE;
@@ -315,7 +342,7 @@ int main(void)
       default:
         printf("Unknown Command\r\n");
       }
-    }
+    }*/
 
     switch(device_state)
     {
@@ -357,7 +384,8 @@ int main(void)
 		  }
 
 
-		  HAL_PWR_MNGR_Request(POWER_SAVE_LEVEL_STOP_NOTIMER, wakeupIO, &stopLevel);
+		  	//  HAL_PWR_MNGR_Request(POWER_SAVE_LEVEL_STOP_WITH_TIMER, wakeupIO, &stopLevel);
+		  	HAL_PWR_MNGR_Request(POWER_SAVE_LEVEL_STOP_NOTIMER, wakeupIO, &stopLevel);
 		}
      //
     }
