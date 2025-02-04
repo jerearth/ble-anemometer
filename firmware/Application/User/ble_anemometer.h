@@ -8,7 +8,7 @@
 #ifndef APPLICATION_USER_BLE_ANEMOMETER_H_
 #define APPLICATION_USER_BLE_ANEMOMETER_H_
 
-
+//#define SIMULATE
 
 typedef struct
 {
